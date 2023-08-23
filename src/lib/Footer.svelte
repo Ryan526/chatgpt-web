@@ -17,10 +17,10 @@ export { classes as class }
   <div class="content has-text-centered credit-footer">
     <p>
       <strong>ChatGPT-web</strong>
-      <span class="author">by
-      <a target="_blank" href="https://niekvandermaas.nl/">Niek van der Maas</a>
+      <span class="author">hosted by
+      <a target="_blank" href="https://jalynski.net/">Ryan Jalynski</a>
       </span>
-      <a target="_blank" class="ml-4" href="https://github.com/Niek/chatgpt-web"><span style="position:absolute" class="icon default-text"><Fa size="2x" icon="{faGithub}"/></span></a>
+      <a target="_blank" class="ml-4" href="https://github.com/Ryan526/chatgpt-web"><span style="position:absolute" class="icon default-text"><Fa size="2x" icon="{faGithub}"/></span></a>
       <span style="display:inline-block;width:30px;height:20px;"></span>
     </p>
   </div>
