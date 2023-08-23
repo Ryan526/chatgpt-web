@@ -16,7 +16,7 @@ export { classes as class }
   <slot />
   <div class="content has-text-centered credit-footer">
     <p>
-      <strong>ChatGPT-web</strong>
+      <strong>JalynskiGPT-web</strong>
       <span class="author">hosted by
       <a target="_blank" href="https://jalynski.net/">Ryan Jalynski</a>
       </span>
