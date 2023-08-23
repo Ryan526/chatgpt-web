@@ -29,7 +29,7 @@ $: activeChatId = $params && $params.chatId ? parseInt($params.chatId) : undefin
     </div>
     <a class="navbar-item" href={'#/'}>
       <img src={logo} alt="ChatGPT-web" width="24" height="24" />
-      <p class="ml-2 is-size-6 has-text-weight-bold">ChatGPT-web</p>
+      <p class="ml-2 is-size-6 has-text-weight-bold">JalynskiGPT-web</p>
     </a>
     <div class="chat-option-menu navbar-item is-pulled-right">
       <ChatOptionMenu bind:chatId={activeChatId} />
