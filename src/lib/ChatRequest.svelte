@@ -176,7 +176,7 @@ export class ChatRequest {
         }
 
         // Get token counts
-        const promptTokenCount = countPromptTokens(messagePayload, model, chat)
+        const promptTokenCount = countPromptTokens(messagePayload, model, chat) + (chatSettings.reasoning_tokens || 0)
         const maxAllowed = maxTokens - (promptTokenCount + 1)
 
         // Build the API request body
@@ -196,6 +196,11 @@ export class ChatRequest {
               if (value > maxAllowed || value < 1) value = null // if over max model, do not define max
               if (value) value = Math.floor(value)
             }
+            if (key === 'max_completion_tokens') {
+              if (opts.maxTokens) value = opts.maxTokens // only as large as requested
+              if (value > maxAllowed || value < 1) value = null // if over max model, do not define max
+              if (value) value = Math.floor(value)
+            }
             if (key === 'n') {
               if (opts.streaming || opts.summaryRequest) {
                 /*
@@ -210,7 +215,8 @@ export class ChatRequest {
             if (value !== null) acc[key] = value
             return acc
           }, {}),
-          stream: opts.streaming
+          stream: opts.streaming,
+          reasoning_tokens: chatSettings.reasoning_tokens
         }
 
         // Make the chat completion request
