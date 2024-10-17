@@ -742,3 +742,48 @@ aside.menu.main-menu .menu-expanse {
 .modal.chat-settings .field-body {
   max-width: calc(100% - 40px);
 }
+
+/* Drag-and-Drop File Upload Styles */
+.drag-and-drop-area {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  color: #999;
+  transition: background-color 0.3s, border-color 0.3s;
+  margin-bottom: 20px;
+}
+
+.drag-and-drop-area.drag-over {
+  background-color: #f0f8ff;
+  border-color: #1e90ff;
+  color: #1e90ff;
+}
+
+.drag-and-drop-area p {
+  margin: 0;
+  font-size: 1.2em;
+}
+
+.drag-and-drop-area .file-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.drag-and-drop-area .file-list li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.drag-and-drop-area .file-list li span {
+  margin-left: 10px;
+  color: #333;
+}
+
+/* Highlight the drag-and-drop area on hover */
+.drag-and-drop-area:hover {
+  border-color: #1e90ff;
+  color: #1e90ff;
+}
