@@ -213,13 +213,22 @@ export class ChatRequest {
           stream: opts.streaming
         }
 
+        // Handle file attachments
+        const formData = new FormData()
+        formData.append('request', JSON.stringify(request))
+        if (opts.files) {
+          opts.files.forEach(file => {
+            formData.append('files', file)
+          })
+        }
+
         // Make the chat completion request
         try {
           // Add out token count to the response handler
           // (some endpoints do not return counts, so we need to do it client side)
           chatResponse.setPromptTokenCount(promptTokenCount)
           // run request for given model
-          await modelDetail.request(request, _this, chatResponse, opts)
+          await modelDetail.request(formData, _this, chatResponse, opts)
         } catch (e) {
         // console.error(e)
           console.error(e, e.stack)

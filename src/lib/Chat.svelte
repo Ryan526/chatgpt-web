@@ -30,7 +30,8 @@
     faMicrophone,
     faLightbulb,
     faCommentSlash,
-    faCircleCheck
+    faCircleCheck,
+    faTimes
   } from '@fortawesome/free-solid-svg-icons/index'
   import { v4 as uuidv4 } from 'uuid'
   import { getPrice } from './Stats.svelte'
@@ -355,11 +356,42 @@
     }
   }
 
+  // Drag-and-drop event handlers
+  const handleDragOver = (event: DragEvent) => {
+    event.preventDefault()
+  }
+
+  const handleDrop = (event: DragEvent) => {
+    event.preventDefault()
+    const files = event.dataTransfer?.files
+    if (files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        if (validateFileType(file)) {
+          attachedFiles.push(file)
+        } else {
+          alert('Unsupported file type. Only JPEG and PNG are allowed.')
+        }
+      }
+    }
+  }
+
+  const validateFileType = (file: File) => {
+    const supportedTypes = ['image/jpeg', 'image/png']
+    return supportedTypes.includes(file.type)
+  }
+
+  let attachedFiles: File[] = []
+
+  const removeFile = (index: number) => {
+    attachedFiles.splice(index, 1)
+  }
+
 </script>
 {#if chat}
 <ChatSettingsModal chatId={chatId} bind:show={showSettingsModal} />
 <div class="chat-page" style="--running-totals: {Object.entries(chat.usage || {}).length}">
-<div class="chat-content">
+<div class="chat-content" on:dragover={handleDragOver} on:drop={handleDrop}>
 <nav class="level chat-header">
   <div class="level-left">
     <div class="level-item">
@@ -393,6 +425,17 @@
 
 {#if $currentChatId !== 0 && ($currentChatMessages.length === 0 || ($currentChatMessages.length === 1 && $currentChatMessages[0].role === 'system'))}
   <Prompts bind:input />
+{/if}
+
+{#if attachedFiles.length > 0}
+  <div class="attached-files">
+    {#each attachedFiles as file, index}
+      <div class="file-preview">
+        <img src={URL.createObjectURL(file)} alt="File preview" />
+        <button class="remove-file" on:click={() => removeFile(index)}><Fa icon={faTimes} /></button>
+      </div>
+    {/each}
+  </div>
 {/if}
 </div>
 <Footer class="prompt-input-container" strongMask={true}>
