@@ -742,3 +742,35 @@ aside.menu.main-menu .menu-expanse {
 .modal.chat-settings .field-body {
   max-width: calc(100% - 40px);
 }
+
+/* Styles for drag-and-drop area and file previews */
+.attached-files {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.file-preview {
+  position: relative;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.file-preview img {
+  max-width: 100px;
+  max-height: 100px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.remove-file {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 2px 5px;
+}
