@@ -392,9 +392,6 @@
 <ChatSettingsModal chatId={chatId} bind:show={showSettingsModal} />
 <div class="chat-page" style="--running-totals: {Object.entries(chat.usage || {}).length}">
 <div class="chat-content">
-  <div class="drag-drop-area" on:dragover={handleDragOver} on:drop={handleDrop}>
-    Drag and drop files here
-  </div>
 <nav class="level chat-header">
   <div class="level-left">
     <div class="level-item">
@@ -442,6 +439,9 @@
 {/if}
 </div>
 <Footer class="prompt-input-container" strongMask={true}>
+  <div class="drag-drop-area" on:dragover={handleDragOver} on:drop={handleDrop}>
+    Drag and drop files here
+  </div>
   <form class="field has-addons has-addons-right is-align-items-flex-end" on:submit|preventDefault={() => submitForm()}>
     <p class="control is-expanded">
       <textarea
