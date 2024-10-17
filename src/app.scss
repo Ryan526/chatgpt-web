@@ -774,3 +774,21 @@ aside.menu.main-menu .menu-expanse {
   cursor: pointer;
   padding: 2px 5px;
 }
+
+/* Styles for drag-and-drop area */
+.drag-drop-area {
+  border: 2px dashed #ccc;
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.drag-drop-area:hover {
+  background-color: #f9f9f9;
+}
+
+.drag-drop-area.dragover {
+  background-color: #e0e0e0;
+}

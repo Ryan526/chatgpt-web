@@ -391,7 +391,10 @@
 {#if chat}
 <ChatSettingsModal chatId={chatId} bind:show={showSettingsModal} />
 <div class="chat-page" style="--running-totals: {Object.entries(chat.usage || {}).length}">
-<div class="chat-content" on:dragover={handleDragOver} on:drop={handleDrop}>
+<div class="chat-content">
+  <div class="drag-drop-area" on:dragover={handleDragOver} on:drop={handleDrop}>
+    Drag and drop files here
+  </div>
 <nav class="level chat-header">
   <div class="level-left">
     <div class="level-item">
