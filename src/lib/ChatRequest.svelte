@@ -203,6 +203,7 @@ export class ChatRequest {
         const request: Request = {
           model: chatSettings.model,
           messages: messagePayload,
+          imageBase64: opts.imageBase64 || null,
           // Provide the settings by mapping the settingsMap to key/value pairs
           ...getRequestSettingList().reduce((acc, setting) => {
             const key = setting.key

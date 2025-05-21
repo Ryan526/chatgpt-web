@@ -49,13 +49,35 @@
   let refreshCounter = 0
   let displayMessage = message.content
 
+  $: {
+    if (message?.image?.id) {
+      getImage(message.image.id).then(chatImage => {
+        if (chatImage?.b64image) {
+          imageUrl = 'data:image/png;base64,' + chatImage.b64image;
+        } else if (message.imagePreviewUrl) {
+          // Fallback if image ID exists but fetch fails, or for temporary display
+          imageUrl = message.imagePreviewUrl;
+        } else {
+          imageUrl = null; // Or some placeholder/error image
+        }
+      }).catch(error => {
+        console.error("Error loading image from ImageStore:", error);
+        if (message.imagePreviewUrl) {
+          imageUrl = message.imagePreviewUrl; // Fallback on error
+        } else {
+          imageUrl = null;
+        }
+      });
+    } else if (message?.imagePreviewUrl) {
+      imageUrl = message.imagePreviewUrl;
+    } else {
+      imageUrl = null;
+    }
+  }
+
   onMount(() => {
     defaultModel = chatSettings.model
-    if (message?.image) {
-      getImage(message.image.id).then(i => {
-        imageUrl = 'data:image/png;base64, ' + i.b64image
-      })
-    }
+    // imageUrl logic is now handled by the reactive block above
     displayMessage = getDisplayMessage()
   })
 
@@ -239,7 +261,7 @@
         on:input={update} on:blur={exit} />
       </form>
         {#if imageUrl}
-          <img src={imageUrl} alt="">
+          <img src={imageUrl} alt="Attached image">
         {/if}
     {:else}
       <div 
@@ -259,7 +281,7 @@
         />
         {/key}
         {#if imageUrl}
-          <img src={imageUrl} alt="">
+          <img src={imageUrl} alt="Attached image" style="max-width: 200px; max-height: 200px; margin-top: 5px;">
         {/if}
     </div>
     {/if}

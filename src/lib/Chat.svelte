@@ -30,7 +30,8 @@
     faMicrophone,
     faLightbulb,
     faCommentSlash,
-    faCircleCheck
+    faCircleCheck,
+    faPaperclip
   } from '@fortawesome/free-solid-svg-icons/index'
   import { v4 as uuidv4 } from 'uuid'
   import { getPrice } from './Stats.svelte'
@@ -41,19 +42,53 @@
   import PromptInput from './PromptInput.svelte'
   import { ChatRequest } from './ChatRequest.svelte'
   import { getModelDetail } from './Models.svelte'
+  import { addUserUploadedImage } from './ImageStore.svelte';
 
   export let params = { chatId: '' }
   const chatId: number = parseInt(params.chatId)
 
   let chatRequest = new ChatRequest()
   let input: HTMLTextAreaElement
+  let fileInput: HTMLInputElement
   let recognition: any = null
   let recording = false
   let lastSubmitRecorded = false
 
+  let selectedImageBase64: string | null = null;
+  let selectedImageName: string | null = null;
+  let isDragging = false;
+
   $: chat = $chatsStorage.find((chat) => chat.id === chatId) as Chat
   $: chatSettings = chat?.settings
   let showSettingsModal
+
+  const handleImageSelection = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    const file = target?.files?.[0];
+
+    if (file) {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          selectedImageBase64 = e.target?.result as string;
+          selectedImageName = file.name;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        console.warn('Invalid file type. Please select an image.');
+        // Optionally, display a user-facing notice here
+      }
+    }
+    // Reset file input to allow selecting the same file again
+    if (target) {
+      target.value = '';
+    }
+  };
+
+  const removeSelectedImage = () => {
+    selectedImageBase64 = null;
+    selectedImageName = null;
+  };
 
   let scDelay
   const onStateChange = async (...args:any) => {
@@ -171,25 +206,54 @@
     scrollToBottom()
   }
 
-  const addNewMessage = () => {
-    if (chatRequest.updating) return
-    let inputMessage: Message
-    const lastMessage = $currentChatMessages[$currentChatMessages.length - 1]
-    const uuid = uuidv4()
-    if ($currentChatMessages.length === 0) {
-      inputMessage = { role: 'system', content: input.value, uuid }
-    } else if (lastMessage && lastMessage.role === 'user') {
-      inputMessage = { role: 'assistant', content: input.value, uuid }
-    } else {
-      inputMessage = { role: 'user', content: input.value, uuid }
-    }
-    addMessage(chatId, inputMessage)
+  const addNewMessage = async () => {
+    if (chatRequest.updating) return;
+    let messageContent = input.value;
+    let imagePreviewPayload: { imagePreviewUrl?: string } = {};
+    let imageStorePayload: { image?: { id: string } } = {};
 
-    // Clear the input value
-    input.value = ''
-    // input.blur()
-    focusInput()
-  }
+    if (selectedImageBase64) {
+      imagePreviewPayload = { imagePreviewUrl: selectedImageBase64 };
+      if (!messageContent.trim() && selectedImageName) {
+        messageContent = `Image: ${selectedImageName}`;
+      }
+      // Store the image and get its ID
+      const storedImageInfo = await addUserUploadedImage(chatId, selectedImageBase64);
+      if (storedImageInfo && storedImageInfo.id) {
+        imageStorePayload = { image: { id: storedImageInfo.id } };
+      }
+    }
+
+    if (!messageContent.trim() && !selectedImageBase64) {
+      // Do not add an empty message if there's no text and no image
+      return;
+    }
+    
+    let inputMessage: Message;
+    const lastMessage = $currentChatMessages[$currentChatMessages.length - 1];
+    const uuid = uuidv4();
+
+    const commonMessageProps = {
+      content: messageContent,
+      uuid,
+      ...imagePreviewPayload,
+      ...imageStorePayload
+    };
+
+    if ($currentChatMessages.length === 0) {
+      inputMessage = { role: 'system', ...commonMessageProps };
+    } else if (lastMessage && lastMessage.role === 'user') {
+      inputMessage = { role: 'assistant', ...commonMessageProps };
+    } else {
+      inputMessage = { role: 'user', ...commonMessageProps };
+    }
+    addMessage(chatId, inputMessage);
+
+    // Clear the input value and selected image
+    input.value = '';
+    removeSelectedImage(); 
+    focusInput();
+  };
 
   const ttsStart = (text:string, recorded:boolean) => {
     // Use TTS to read the response, if query was recorded
@@ -226,25 +290,48 @@
     if (!skipInput) {
       chat.sessionStarted = true
       saveChatStore()
-      if (input.value !== '') {
-        // Compose the input message
-        const inputMessage: Message = { role: 'user', content: input.value, uuid: uuidv4() }
-        addMessage(chatId, inputMessage)
+      
+      let messageContent = input.value;
+      let imagePreviewPayload: { imagePreviewUrl?: string } = {};
+      let imageStorePayload: { image?: { id: string } } = {};
+
+      if (selectedImageBase64) {
+        imagePreviewPayload = { imagePreviewUrl: selectedImageBase64 };
+        if (!messageContent.trim() && selectedImageName) {
+          messageContent = `Image: ${selectedImageName}`; 
+        }
+        // Store the image and get its ID
+        const storedImageInfo = await addUserUploadedImage(chatId, selectedImageBase64);
+        if (storedImageInfo && storedImageInfo.id) {
+          imageStorePayload = { image: { id: storedImageInfo.id } };
+        }
+      }
+
+      if (messageContent.trim() || selectedImageBase64) { // Ensure message is added if only image is present
+        const inputMessage: Message = { 
+          role: 'user', 
+          content: messageContent, 
+          uuid: uuidv4(),
+          ...imagePreviewPayload,
+          ...imageStorePayload 
+        };
+        addMessage(chatId, inputMessage);
       } else if (!fillMessage && $currentChatMessages.length &&
         $currentChatMessages[$currentChatMessages.length - 1].role === 'assistant') {
-        fillMessage = $currentChatMessages[$currentChatMessages.length - 1]
+        fillMessage = $currentChatMessages[$currentChatMessages.length - 1];
       }
   
-      // Clear the input value
-      input.value = ''
-      input.blur()
+      // Clear the input value and selected image
+      input.value = '';
+      removeSelectedImage();
+      input.blur();
   
       // Resize back to single line height
-      input.style.height = 'auto'
+      input.style.height = 'auto';
     }
-    focusInput()
+    focusInput();
 
-    chatRequest.updating = true
+    chatRequest.updating = true;
     chatRequest.updatingMessage = ''
 
     let doScroll = true
@@ -266,6 +353,7 @@
         autoAddMessages: true, // Auto-add and update messages in array
         streaming: chatSettings.stream,
         fillMessage,
+        imageBase64: selectedImageBase64 || null,
         onMessageChange: (messages) => {
           if (doScroll) scrollToBottom(true)
           didScroll = !!messages[0]?.content
@@ -397,10 +485,24 @@
 </div>
 <Footer class="prompt-input-container" strongMask={true}>
   <form class="field has-addons has-addons-right is-align-items-flex-end" on:submit|preventDefault={() => submitForm()}>
-    <p class="control is-expanded">
+    <div class="control is-expanded">
+      {#if selectedImageBase64}
+        <div class="selected-image-preview field has-addons">
+          <div class="control">
+            <img src={selectedImageBase64} alt="Preview" style="max-width: 50px; max-height: 50px; margin-right: 5px;" />
+          </div>
+          <div class="control is-expanded">
+            <span class="is-size-7">{selectedImageName}</span>
+          </div>
+          <div class="control">
+            <button type="button" class="delete is-small" on:click={removeSelectedImage} title="Remove image"></button>
+          </div>
+        </div>
+      {/if}
       <textarea
         class="input is-info is-focused chat-input auto-size"
-        placeholder="[{chat.settings.model}] Type your message here..."
+        class:drag-over={isDragging}
+        placeholder="[{chat.settings.model}] Type your message here or drag and drop an image..."
         rows="1"
         on:keydown={e => {
           // Only send if Enter is pressed, not Shift+Enter
@@ -412,7 +514,36 @@
         }}
         on:input={e => autoGrowInputOnEvent(e)}
         bind:this={input}
+        on:dragover={e => {
+          e.preventDefault();
+          isDragging = true;
+        }}
+        on:dragleave={() => {
+          isDragging = false;
+        }}
+        on:drop={e => {
+          e.preventDefault();
+          isDragging = false;
+          handleImageSelection(e);
+        }}
       />
+    </div>
+    <p class="control">
+      <input
+        bind:this={fileInput}
+        type="file"
+        accept="image/*"
+        style="display: none;"
+        on:change={handleImageSelection}
+      />
+      <button
+        class="button"
+        type="button"
+        title="Attach image"
+        on:click={() => fileInput?.click()}
+      >
+        <Fa icon={faPaperclip} />
+      </button>
     </p>
     <p class="control mic" class:is-hidden={!recognition}>
       <button class="button" class:is-disabled={chatRequest.updating} class:is-pulse={recording} on:click|preventDefault={recordToggle}
@@ -441,7 +572,6 @@
     </p>
     {/if}
   </form>
-  <!-- a target to scroll to -->
   <div class="content has-text-centered running-total-container">
     {#each Object.entries(chat.usage || {}) as [model, usage]}
     <p class="is-size-7 running-totals">

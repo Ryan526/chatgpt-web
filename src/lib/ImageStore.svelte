@@ -75,4 +75,45 @@
     return clone
   }
 
+  export const addUserUploadedImage = async (chatId: number, base64ImageDataUrl: string): Promise<ChatImage | null> => {
+    if (!base64ImageDataUrl) {
+      return null;
+    }
+
+    const base64Prefix = /^data:image\/[a-z]+;base64,/;
+    const extractedBase64Content = base64ImageDataUrl.replace(base64Prefix, '');
+    const generatedId = uuidv4();
+
+    const newImage: ChatImage = {
+      id: generatedId,
+      b64image: extractedBase64Content,
+      chats: [chatId],
+      // created: Date.now() // Optional: Add timestamp if needed in ChatImage type
+    };
+
+    if (_hasIndexedDb) {
+      try {
+        await imageDb.images.put(newImage, newImage.id);
+      } catch (error) {
+        console.error("Failed to store image in IndexedDB:", error);
+        // Fallback or alternative handling if IndexedDB fails, though not the primary path
+        // For now, we'll just log the error. If imageCache is to be used as a fallback:
+        // imageCache[newImage.id] = newImage; 
+      }
+    } else {
+      // Handle the case where IndexedDB is not available
+      // For example, store in memory (though this won't persist across sessions)
+      console.warn("IndexedDB not available. Image not persistently stored.");
+      // imageCache[newImage.id] = newImage; // Optional: cache in memory
+      return null; // Or handle differently if non-persistent storage is acceptable
+    }
+    
+    // Return a "cleaned" version of the image object
+    return {
+      id: newImage.id,
+      // chats: newImage.chats, // Only include if needed by the caller immediately
+      // b64image: '', // Explicitly ensure it's not returned
+    } as ChatImage; // Cast to ChatImage, acknowledging b64image is missing
+  };
+
 </script>

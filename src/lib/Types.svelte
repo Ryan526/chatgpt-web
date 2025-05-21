@@ -36,6 +36,7 @@ export type Message = {
     created?: number;
     skipOnce?: boolean;
     appendOnce?: string[];
+    imagePreviewUrl?: string;
   };
 
 export type ResponseAlteration = {
@@ -57,6 +58,7 @@ export type Request = {
     frequency_penalty?: number;
     logit_bias?: Record<string, number> | null;
     user?: string;
+    imageBase64?: string | null;
   };
 
 export type ChatSettings = {

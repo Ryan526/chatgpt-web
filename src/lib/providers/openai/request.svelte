@@ -13,6 +13,7 @@ export const chatRequest = async (
   opts: ChatCompletionOpts): Promise<ChatCompletionResponse> => {
     // OpenAI Request
       const model = await chatRequest.getModel()
+      const modelDetail = getModelDetail(model)
       const signal = chatRequest.controller.signal
       const abortListener = (e:Event) => {
         chatRequest.updating = false
@@ -21,6 +22,28 @@ export const chatRequest = async (
         signal.removeEventListener('abort', abortListener)
       }
       signal.addEventListener('abort', abortListener)
+
+      // Handle image data if present
+      if (request.imageBase64 && modelDetail.opt?.vision) {
+        const lastUserMessageIndex = request.messages.map(m => m.role).lastIndexOf('user');
+        if (lastUserMessageIndex !== -1) {
+          const userMessage = request.messages[lastUserMessageIndex];
+          const originalText = userMessage.content;
+          userMessage.content = [
+            { type: 'text', text: originalText },
+            {
+              type: 'image_url',
+              image_url: {
+                url: request.imageBase64,
+                detail: 'low' 
+              }
+            }
+          ];
+        }
+        // Clear after use, as request object might be reused or logged.
+        request.imageBase64 = null; 
+      }
+
       const fetchOptions = {
         method: 'POST',
         headers: {
